@@ -31,7 +31,7 @@ function psl_flush_rules()
         $wp_rewrite->flush_rules();
     }
 }
-add_action( 'wp_loaded','psl_flush_rules' );
+add_action('wp_loaded', 'psl_flush_rules');
 
 // Adding a new rule
 /**
@@ -62,8 +62,14 @@ function psl_redirect($vars)
 {
     if (key_exists(psl_query_vars_name, $vars)) {
         $url = get_permalink($vars[psl_query_vars_name]);
-        if (wp_redirect($url)) {
-            exit;
+        if ($url === false) {
+            if (wp_redirect(get_home_url())) {
+                exit;
+            }
+        } else {
+            if (wp_redirect($url)) {
+                exit;
+            }
         }
     }
     return $vars;
