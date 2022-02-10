@@ -8,7 +8,30 @@
  * Author URI: http://www.m-jalali.ir
  */
 
+const psl_query_vars_name = 'shortlink';
 
+function psl_get_slug()
+{
+    $slug = get_option('psl_slug', false);
+    if ($slug !== false)
+        return $slug;
+    else
+        return 'q';
+}
+
+/**
+ * Flushes rewrites if our project rule isn't yet added.
+ */
+function psl_flush_rules()
+{
+    $rules = get_option('rewrite_rules');
+    $slug = psl_get_slug();
+    if (!isset($rules["$slug/([^/]+)/?$"])) {
+        global $wp_rewrite;
+        $wp_rewrite->flush_rules();
+    }
+}
+add_action( 'wp_loaded','psl_flush_rules' );
 
 // Adding a new rule
 /**
@@ -17,29 +40,32 @@
  * @param array $rules Existing rewrite rules.
  * @return array (Maybe) modified list of rewrites.
  */
-function wpdocs_insert_rewrite_rules($rules)
+function psl_insert_rewrite_rules($rules)
 {
     $newrules = array();
-    $newrules['q/([^/]+)/?$'] = 'index.php?shortlink=$matches[1]';
+    $slug = psl_get_slug();
+    $newrules["$slug/([^/]+)/?$"] = 'index.php?' . psl_query_vars_name . '=$matches[1]';
     return $newrules + $rules;
 }
-add_filter('rewrite_rules_array', 'wpdocs_insert_rewrite_rules');
+add_filter('rewrite_rules_array', 'psl_insert_rewrite_rules');
 
 // Adding the id var so that WP recognizes it
-function wpdocs_insert_query_vars($vars)
+function psl_insert_query_vars($vars)
 {
-    array_push($vars, 'shortlink');
+    array_push($vars, psl_query_vars_name);
     return $vars;
 }
-function wpdocs_re_query_vars($vars)
+add_filter('query_vars', 'psl_insert_query_vars');
+
+
+function psl_redirect($vars)
 {
-    if (key_exists('shortlink', $vars)) {
-        $url = get_permalink($vars['shortlink']);
+    if (key_exists(psl_query_vars_name, $vars)) {
+        $url = get_permalink($vars[psl_query_vars_name]);
         if (wp_redirect($url)) {
             exit;
         }
     }
     return $vars;
 }
-add_filter('query_vars', 'wpdocs_insert_query_vars');
-add_filter('request', 'wpdocs_re_query_vars');
+add_filter('request', 'psl_redirect');
