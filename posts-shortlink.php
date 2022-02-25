@@ -202,7 +202,7 @@ function psl_add_column_get_shortlink($column, $id)
         $indicator = psl_get_indicator((int)$id);
         $slug = psl_get_slug();
         $url_shortlink = get_home_url() . '/' . $slug . '/' . $indicator;
-        echo '<p onclick="navigator.clipboard.writeText(\'' . $url_shortlink . '\');alert(\'Copied the link\')" title="Click to copy the address. ' . $url_shortlink . '">' . $slug . '/' . $indicator . '</p>';
+        echo '<p onclick="navigator.clipboard.writeText(\'' . $url_shortlink . '\');alert(\'Copied the link\')" title="Click to copy the address. ' . $url_shortlink . '">../' . $slug . '/' . $indicator . '</p>';
     }
 }
 add_action('manage_posts_custom_column', 'psl_add_column_get_shortlink', 2, 2);
@@ -331,6 +331,61 @@ function psl_add_menu()
     $tt_page = add_submenu_page("options-general.php", "Posts short link", "Posts short link", "manage_options", "psl-panel", "psl_admin_panel_display", null, 99);
 }
 add_action("admin_menu", "psl_add_menu");
+/**
+ * 
+ * @param mixed $value
+ * @param mixed $sample
+ * @param array $arr
+ * 
+ * @return bool if data is valide then return true
+ */
+function psl_validate($value, $sample, $arr = array())
+{
+    if (isset($arr['name'])) {
+        if (isset($arr[$arr['name']]) && is_array($arr[$arr['name']]))
+            $arr = $arr[$arr['name']];
+        else
+            $arr = array();
+    }
+
+    $arr = array_merge(array(
+        'empty_allowed' => false,
+        'max' => false,
+        'min' => false,
+        'length' => false,
+        'max_length' => false,
+        'min_length' => false,
+    ), $arr);
+
+    if (empty($value) && !$arr['empty_allowed'])
+        return false;
+
+    if (gettype($value) != gettype($sample))
+        return false;
+
+    if (is_numeric($value) && $arr['max'] !== false)
+        if ($value > $arr['max'])
+            return false;
+
+    if (is_numeric($value) && $arr['min'] !== false)
+        if ($value < $arr['min'])
+            return false;
+
+    if (is_string($value) && $arr['length'] !== false)
+        if (strlen($value) !== $arr['length'])
+            return false;
+
+    if (is_string($value) && $arr['max_length'] !== false)
+        if (strlen($value) > $arr['max_length'])
+            return false;
+
+    if (is_string($value) && $arr['min_length'] !== false)
+        if (strlen($value) < $arr['min_length'])
+            return false;
+
+
+    return true;
+}
 
 /**
  * For plugin 'page short link'.
@@ -341,8 +396,8 @@ function psl_admin_panel_display()
     if (isset($_POST['submit'])) {
         $def = psl_get_default_option();
         foreach ($def as $key => $value) {
-            if (isset($_POST[$key]))
-                $def[$key] = $_POST[$key];
+            if (isset($_POST[$key]) && psl_validate($_POST[$key], $value, array('name' => $key, 'character' => array('min' => 0,'max'=>40))))
+                $def[$key] = sanitize_key($_POST[$key]);
         }
         update_option(psl_option_name, $def);
     }
@@ -356,7 +411,7 @@ function psl_admin_panel_display()
             <table class="form-table" role="presentation">
                 <tr>
                     <th scope="row"><label for="slug">slug</label></th>
-                    <td><input name="slug" type="text" id="slug" value="<?php echo $option['slug']; ?>" class="regular-text" /></td>
+                    <td><input name="slug" type="text" id="slug" value="<?php echo wp_kses($option['slug'], ''); ?>" class="regular-text" /></td>
                 </tr>
                 <tr>
                     <th scope="row"><label for="indicator_mode">indicator</label></th>
@@ -365,7 +420,7 @@ function psl_admin_panel_display()
                             <?php
                             foreach ($indicator_mode as $key) {
                                 $selected = $option['indicator_mode'] == $key ? 'selected="selected"' : '';
-                                echo "<option value='" . esc_attr($key) . "' $selected>" . $key . '</option>';
+                                echo "<option value='" . esc_attr($key) . "' $selected>" . wp_kses($key, '') . '</option>';
                             }
                             ?>
                         </select>
@@ -373,7 +428,7 @@ function psl_admin_panel_display()
                 </tr>
                 <tr>
                     <th scope="row"><label for="character">Character</label></th>
-                    <td><input name="character" type="number" id="character" value="<?php echo $option['character']; ?>" class="regular-number" /></td>
+                    <td><input name="character" type="number" id="character" min="0" max="40" value="<?php echo wp_kses($option['character'], ''); ?>" class="regular-number" /></td>
                 </tr>
             </table>
             <?php submit_button(); ?>
