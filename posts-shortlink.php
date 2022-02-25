@@ -2,6 +2,7 @@
 
 /**
  * Plugin Name: Posts short link
+ * Plugin URI: 
  * Description: Posts short link
  * Version: 1.2.0
  * Author: jalali2536
@@ -202,7 +203,7 @@ function psl_add_column_get_shortlink($column, $id)
         $indicator = psl_get_indicator((int)$id);
         $slug = psl_get_slug();
         $url_shortlink = get_home_url() . '/' . $slug . '/' . $indicator;
-        echo '<p onclick="navigator.clipboard.writeText(\'' . $url_shortlink . '\');alert(\'Copied the link\')" title="Click to copy the address. ' . $url_shortlink . '">../' . $slug . '/' . $indicator . '</p>';
+        echo '<p onclick="navigator.clipboard.writeText(\'' . esc_url($url_shortlink) . '\');alert(\'Copied the link\')" title="Click to copy the address. ' . esc_url($url_shortlink) . '">../' . wp_kses($slug, '') . '/' . wp_kses($indicator, '') . '</p>';
     }
 }
 add_action('manage_posts_custom_column', 'psl_add_column_get_shortlink', 2, 2);
@@ -396,7 +397,7 @@ function psl_admin_panel_display()
     if (isset($_POST['submit'])) {
         $def = psl_get_default_option();
         foreach ($def as $key => $value) {
-            if (isset($_POST[$key]) && psl_validate($_POST[$key], $value, array('name' => $key, 'character' => array('min' => 0,'max'=>40))))
+            if (isset($_POST[$key]) && psl_validate($_POST[$key], $value, array('name' => $key, 'character' => array('min' => 0, 'max' => 40))))
                 $def[$key] = sanitize_key($_POST[$key]);
         }
         update_option(psl_option_name, $def);
