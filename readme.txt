@@ -10,8 +10,8 @@ A plugin for creating short links to site content.
 
 == Description ==
 A plugin for creating short links to site content. For sharing on social networks and convenience in typing links.
-Plugin URL in GitHub [https://github.com/m-jalali-25-36/wp-Post-short-link](https://github.com/m-jalali-25-36/wp-Post-short-link).
-Email the author of this plugin [m.jalali.ba@gmail.com](m.jalali.ba@gmail.com)
+Plugin URL in GitHub https://github.com/m-jalali-25-36/wp-Post-short-link
+Email the author of this plugin m.jalali.ba@gmail.com
 
 == Installation ==
 1. Upload \'Posts-shortlink.zip\' to the \'/wp-content/plugins/\' directory
